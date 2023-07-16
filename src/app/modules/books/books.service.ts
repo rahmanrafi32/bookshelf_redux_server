@@ -1,42 +1,71 @@
 import BooksModel from './books.model';
 import { IBook } from './books.interface';
 import Books from './books.model';
-// import { SortOrder } from 'mongoose';
-// import calculatePagination from '../../../helper/calculatePagination';
+import { SortOrder } from 'mongoose';
+import calculatePagination from '../../../helper/calculatePagination';
 
-// type IFilter = {
-//   publicationYear: number;
-//   genre: string;
-// };
-//
-// type paginationOption = {
-//   page?: number;
-//   limit?: number;
-//   sortBy?: string | undefined;
-//   sortOrder?: SortOrder;
-// };
-// const getAllBooks = async (
-//   filters: Partial<IFilter>,
-//   paginationOptions: paginationOption
-// ) => {
-//   const { limit, skip } = calculatePagination(paginationOptions);
-//
-//   const { ...filtersData } = filters;
-//   const andConditions = [];
-//   if (Object.keys(filtersData).length) {
-//     andConditions.push({
-//       $and: Object.entries(filtersData).map(([field, value]) => ({
-//         [field]: value,
-//       })),
-//     });
-//   }
-//   const whereConditions =
-//     andConditions.length > 0 ? { $and: andConditions } : {};
-//   return BooksModel.find(whereConditions).skip(skip).limit(limit);
-// };
+type IFilter = {
+  searchTerm?: string;
+  publicationYear?: number;
+  genre?: string;
+};
 
-const getAllBooks = async () => {
-  return BooksModel.find();
+type paginationOption = {
+  page?: number;
+  limit?: number;
+  sortBy?: string | undefined;
+  sortOrder?: SortOrder;
+};
+
+const searchableFields = ['title', 'author'];
+const getAllBooks = async (
+  filters: IFilter,
+  paginationOptions: paginationOption
+) => {
+  const { searchTerm, ...filtersData } = filters;
+  const { limit, skip, sortBy, sortOrder } =
+    calculatePagination(paginationOptions);
+
+  const andConditions = [];
+
+  if (searchTerm) {
+    andConditions.push({
+      $or: searchableFields.map((field) => ({
+        [field]: {
+          $regex: searchTerm,
+          $options: 'i',
+        },
+      })),
+    });
+  }
+
+  if (Object.keys(filtersData).length) {
+    andConditions.push({
+      $and: Object.entries(filtersData).map(([field, value]) => {
+        if (field === 'publicationDate') {
+          return { publicationDate: { $regex: `^${value}` } };
+        } else {
+          return {
+            [field]: value,
+          };
+        }
+      }),
+    });
+  }
+
+  const sortConditions: { [key: string]: SortOrder } = {};
+
+  if (sortBy && sortOrder) {
+    sortConditions[sortBy] = sortOrder;
+  }
+
+  const whereConditions =
+    andConditions.length > 0 ? { $and: andConditions } : {};
+
+  return BooksModel.find(whereConditions)
+    .sort(sortConditions)
+    .skip(skip)
+    .limit(limit);
 };
 
 const getBookById = (id: string) => {
@@ -61,7 +90,6 @@ const deleteBook = (id: string) => {
 };
 
 const editBook = (id: string, editData: IBook) => {
-  console.log(editData);
   return BooksModel.findOneAndUpdate({ _id: id }, editData, { new: true });
 };
 

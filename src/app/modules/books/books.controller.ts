@@ -3,26 +3,16 @@ import { Request, Response } from 'express';
 import customResponse from '../../shared/customResponse';
 import httpStatus from 'http-status';
 import { booksService } from './books.service';
-// import pick from '../../shared/pick';
+import pick from '../../shared/pick';
 
-// const getAllBooks = asyncTryCatch(
-//   async (req: Request, res: Response): Promise<void> => {
-//     console.log(req.query);
-//     const filters = pick(req.query, filterAbleFields);
-//     const paginationOptions = pick(req.query, paginationFields);
-//     const result = await booksService.getAllBooks(filters, paginationOptions);
-//
-//     customResponse(res, {
-//       statusCode: httpStatus.OK,
-//       success: true,
-//       data: result,
-//     });
-//   }
-// );
+const filterAbleFields = ['searchTerm', 'publicationDate', 'genre'];
+const paginationFields = ['page', 'limit', 'sortBy', 'sortOrder'];
 
 const getAllBooks = asyncTryCatch(
   async (req: Request, res: Response): Promise<void> => {
-    const result = await booksService.getAllBooks();
+    const filters = pick(req.query, filterAbleFields);
+    const paginationOptions = pick(req.query, paginationFields);
+    const result = await booksService.getAllBooks(filters, paginationOptions);
 
     customResponse(res, {
       statusCode: httpStatus.OK,
