@@ -72,7 +72,7 @@ const getBookReview = asyncTryCatch(
 
 const deleteBook = asyncTryCatch(
   async (req: Request, res: Response): Promise<void> => {
-    await booksService.deleteBook(req.params.id);
+    await booksService.deleteBook(req.params.id, req.user);
 
     customResponse(res, {
       statusCode: httpStatus.OK,
@@ -84,7 +84,7 @@ const deleteBook = asyncTryCatch(
 
 const editBook = asyncTryCatch(
   async (req: Request, res: Response): Promise<void> => {
-    await booksService.editBook(req.params.id, req.body);
+    await booksService.editBook(req.params.id, req.body, req.user);
 
     customResponse(res, {
       statusCode: httpStatus.OK,

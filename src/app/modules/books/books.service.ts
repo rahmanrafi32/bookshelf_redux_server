@@ -3,6 +3,9 @@ import { IBook } from './books.interface';
 import Books from './books.model';
 import { SortOrder } from 'mongoose';
 import calculatePagination from '../../../helper/calculatePagination';
+import { JwtPayload } from 'jsonwebtoken';
+import httpStatus from 'http-status';
+import ApiError from '../../errorHandlers/ApiError';
 
 type IFilter = {
   searchTerm?: string;
@@ -85,12 +88,40 @@ const getBookReview = (id: string) => {
   return BooksModel.findById({ _id: id }, { _id: 0, reviews: 1 });
 };
 
-const deleteBook = (id: string) => {
-  return BooksModel.findOneAndDelete({ _id: id });
+const deleteBook = async (
+  id: string,
+  userData: JwtPayload | null | undefined
+) => {
+  if (!userData) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'FORBIDDEN');
+  }
+  const res = await BooksModel.findOneAndDelete({
+    _id: id,
+    user: userData.user,
+  });
+  if (res) {
+    return res;
+  } else throw new ApiError(httpStatus.UNAUTHORIZED, 'UNAUTHORIZED');
 };
 
-const editBook = (id: string, editData: IBook) => {
-  return BooksModel.findOneAndUpdate({ _id: id }, editData, { new: true });
+const editBook = async (
+  id: string,
+  editData: IBook,
+  userData: JwtPayload | null | undefined
+) => {
+  if (!userData) {
+    throw new ApiError(httpStatus.FORBIDDEN, 'FORBIDDEN');
+  }
+  const res = await BooksModel.findOneAndUpdate(
+    { _id: id, user: userData.user },
+    editData,
+    {
+      new: true,
+    }
+  );
+  if (res) {
+    return res;
+  } else throw new ApiError(httpStatus.UNAUTHORIZED, 'UNAUTHORIZED');
 };
 
 export const booksService = {
