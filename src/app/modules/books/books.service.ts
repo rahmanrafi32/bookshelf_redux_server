@@ -17,7 +17,7 @@ type paginationOption = {
   sortOrder?: SortOrder;
 };
 
-const searchableFields = ['title', 'author'];
+const searchableFields = ['title', 'author', 'genre'];
 const getAllBooks = async (
   filters: IFilter,
   paginationOptions: paginationOption
